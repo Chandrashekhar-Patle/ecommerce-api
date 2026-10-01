@@ -5,11 +5,6 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 
-Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
-    return response()->json([
-        'user' => $request->user()
-    ]);
-});
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -23,6 +18,11 @@ Route::get('/products/{product}', [ProductController::class, 'show']);
 
 // Protected routes — must be logged in
 Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
+    return response()->json([
+        'user' => $request->user()
+    ]);
+});
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::post('/products', [ProductController::class, 'store']);
