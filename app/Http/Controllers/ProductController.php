@@ -26,7 +26,10 @@ class ProductController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $product = Product::create($validated);
+        $product = Product::create([
+    ...$validated,
+    'user_id' => $request->user()->id,
+]);
 
         return response()->json($product, 201);
     }
@@ -36,27 +39,42 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
-    public function update(Request $request, Product $product)
-    {
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'slug' => 'sometimes|required|string|max:255|unique:products,slug,' . $product->id,
-            'description' => 'nullable|string',
-            'price' => 'sometimes|required|numeric|min:0',
-            'stock' => 'sometimes|required|integer|min:0',
-            'sku' => 'sometimes|required|string|max:255|unique:products,sku,' . $product->id,
-            'is_active' => 'boolean',
-        ]);
+    public function update(Request $request, $id)
+{
+    $product = Product::findOrFail($id);
 
-        $product->update($validated);
-
-        return response()->json($product);
+    if ($product->user_id !== $request->user()->id) {
+        return response()->json([
+            'message' => 'You are not authorized to update this product.'
+        ], 403);
     }
 
-    public function destroy(Product $product)
-    {
-        $product->delete();
+    $validated = $request->validate([
+        'name' => 'sometimes|required|string|max:255',
+        'description' => 'sometimes|nullable|string',
+        'price' => 'sometimes|required|numeric|min:0',
+        'stock' => 'sometimes|required|integer|min:0',
+    ]);
 
-        return response()->json(null, 204);
+    $product->update($validated);
+
+    return response()->json($product);
+}
+
+    public function destroy(Request $request, $id)
+{
+    $product = Product::findOrFail($id);
+
+    if ($product->user_id !== $request->user()->id) {
+        return response()->json([
+            'message' => 'You are not authorized to delete this product.'
+        ], 403);
     }
+
+    $product->delete();
+
+    return response()->json([
+        'message' => 'Product deleted successfully'
+    ]);
+}
 }
